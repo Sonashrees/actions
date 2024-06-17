@@ -43,7 +43,7 @@ jobs:
         ISSUE_KEYS: ${{ env.ISSUE_KEYS }}
         JIRA_USERNAME: ${{ secrets.JIRA_USERNAME }} # Your Jira username for assigning issues
       run: |
-        for ISSUE_KEY in ${ISSUE_KEYS}; do
+        for ISSUE_KEY in $ISSUE_KEYS; do
           echo "Assigning issue: ${ISSUE_KEY} to ${JIRA_USERNAME}"
           curl --request PUT \
             --url "${JIRA_BASE_URL}/rest/api/3/issue/${ISSUE_KEY}/assignee" \

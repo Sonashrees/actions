@@ -22,8 +22,8 @@ jobs:
       run: |
         JQL_QUERY=$(echo "status='To Do'" | jq -sRr @uri)  # Encode the JQL query
         SEARCH_RESULTS=$(curl --request GET \
-          --url "${{ secrets.JIRA_URL }}/rest/api/3/search?jql=${JQL_QUERY}" \
-          --user "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+          --url "${JIRA_BASE_URL}/rest/api/3/search?jql=${JQL_QUERY}" \
+          --user "${JIRA_EMAIL}:${JIRA_API_TOKEN}" \
           --header 'Accept: application/json')
         echo "${SEARCH_RESULTS}" > search_results.json
         ISSUE_KEYS=$(echo "${SEARCH_RESULTS}" | jq -r '.issues[].key' | tr '\n' ' ')

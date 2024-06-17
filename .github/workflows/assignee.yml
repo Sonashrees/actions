@@ -1,6 +1,8 @@
 name: Assign Unassigned Jira Issues
 
 on:
+  schedule:
+    - cron: '0 * * * *' # Runs every hour
   workflow_dispatch: # Allows manual triggering of the workflow
 
 jobs:
@@ -17,6 +19,18 @@ jobs:
       - name: Check jq installation
         run: jq --version
 
+      - name: Debug environment variables
+        run: |
+          echo "JIRA_BASE_URL: $JIRA_BASE_URL"
+          echo "JIRA_USER_EMAIL: $JIRA_USER_EMAIL"
+          echo "JIRA_PROJECT_KEY: $JIRA_PROJECT_KEY"
+          echo "JIRA_ASSIGNEE_ACCOUNT_ID: $JIRA_ASSIGNEE_ACCOUNT_ID"
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+          JIRA_ASSIGNEE_ACCOUNT_ID: ${{ secrets.JIRA_ASSIGNEE_ACCOUNT_ID }}
+
       - name: Assign unassigned Jira issues
         env:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
@@ -25,19 +39,28 @@ jobs:
           JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
           JIRA_ASSIGNEE_ACCOUNT_ID: ${{ secrets.JIRA_ASSIGNEE_ACCOUNT_ID }}
         run: |
-          JQL="project=${{ secrets.JIRA_PROJECT_KEY }} AND assignee IS EMPTY"
+          JQL="project=${JIRA_PROJECT_KEY} AND assignee IS EMPTY"
           RESPONSE=$(curl -s -X GET \
             --url "$JIRA_BASE_URL/rest/api/2/search?jql=$JQL" \
             --user "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" \
             --header 'Content-Type: application/json')
 
+          echo "Response from Jira API:"
+          echo $RESPONSE
+
           ISSUES=$(echo $RESPONSE | jq -r '.issues[] | .key')
+
+          echo "Issues to be assigned:"
+          echo $ISSUES
 
           for ISSUE in $ISSUES; do
             echo "Assigning issue $ISSUE to $JIRA_ASSIGNEE_ACCOUNT_ID"
-            curl -s -X PUT \
+            ASSIGN_RESPONSE=$(curl -s -X PUT \
               --url "$JIRA_BASE_URL/rest/api/2/issue/$ISSUE/assignee" \
               --user "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" \
               --header 'Content-Type: application/json' \
-              --data "{\"accountId\": \"$JIRA_ASSIGNEE_ACCOUNT_ID\"}"
+              --data "{\"accountId\": \"$JIRA_ASSIGNEE_ACCOUNT_ID\"}")
+
+            echo "Assign response for $ISSUE:"
+            echo $ASSIGN_RESPONSE
           done

@@ -39,28 +39,47 @@ jobs:
           JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
           JIRA_ASSIGNEE_ACCOUNT_ID: ${{ secrets.JIRA_ASSIGNEE_ACCOUNT_ID }}
         run: |
+          set -e
           JQL="project=${JIRA_PROJECT_KEY} AND assignee IS EMPTY"
-          RESPONSE=$(curl -s -X GET \
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
             --url "$JIRA_BASE_URL/rest/api/2/search?jql=$JQL" \
             --user "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" \
             --header 'Content-Type: application/json')
 
-          echo "Response from Jira API:"
-          echo $RESPONSE
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
 
-          ISSUES=$(echo $RESPONSE | jq -r '.issues[] | .key')
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "Error: Failed to fetch issues from Jira. HTTP status code: $HTTP_CODE"
+            echo "Response: $RESPONSE_BODY"
+            exit 1
+          fi
+
+          echo "Response from Jira API:"
+          echo "$RESPONSE_BODY"
+
+          ISSUES=$(echo "$RESPONSE_BODY" | jq -r '.issues[] | .key')
 
           echo "Issues to be assigned:"
-          echo $ISSUES
+          echo "$ISSUES"
 
           for ISSUE in $ISSUES; do
             echo "Assigning issue $ISSUE to $JIRA_ASSIGNEE_ACCOUNT_ID"
-            ASSIGN_RESPONSE=$(curl -s -X PUT \
+            ASSIGN_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
               --url "$JIRA_BASE_URL/rest/api/2/issue/$ISSUE/assignee" \
               --user "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" \
               --header 'Content-Type: application/json' \
               --data "{\"accountId\": \"$JIRA_ASSIGNEE_ACCOUNT_ID\"}")
 
+            ASSIGN_HTTP_CODE=$(echo "$ASSIGN_RESPONSE" | tail -n1)
+            ASSIGN_RESPONSE_BODY=$(echo "$ASSIGN_RESPONSE" | sed '$d')
+
+            if [ "$ASSIGN_HTTP_CODE" -ne 204 ]; then
+              echo "Error: Failed to assign issue $ISSUE. HTTP status code: $ASSIGN_HTTP_CODE"
+              echo "Response: $ASSIGN_RESPONSE_BODY"
+              exit 1
+            fi
+
             echo "Assign response for $ISSUE:"
-            echo $ASSIGN_RESPONSE
+            echo "$ASSIGN_RESPONSE_BODY"
           done

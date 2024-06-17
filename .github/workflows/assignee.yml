@@ -47,16 +47,21 @@ jobs:
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
 
+          echo "HTTP_CODE: $HTTP_CODE"
+          echo "RESPONSE_BODY: $RESPONSE_BODY"
+
           if [ "$HTTP_CODE" -ne 200 ]; then
             echo "Error: Failed to fetch issues from Jira. HTTP status code: $HTTP_CODE"
             echo "Response: $RESPONSE_BODY"
             exit 1
           fi
 
-          echo "Response from Jira API:"
-          echo "$RESPONSE_BODY"
-
           ISSUES=$(echo "$RESPONSE_BODY" | jq -r '.issues[] | .key')
+
+          if [ -z "$ISSUES" ]; then
+            echo "No unassigned issues found."
+            exit 0
+          fi
 
           echo "Issues to be assigned:"
           echo "$ISSUES"
@@ -71,6 +76,9 @@ jobs:
 
             ASSIGN_HTTP_CODE=$(echo "$ASSIGN_RESPONSE" | tail -n1)
             ASSIGN_RESPONSE_BODY=$(echo "$ASSIGN_RESPONSE" | sed '$d')
+
+            echo "ASSIGN_HTTP_CODE: $ASSIGN_HTTP_CODE"
+            echo "ASSIGN_RESPONSE_BODY: $ASSIGN_RESPONSE_BODY"
 
             if [ "$ASSIGN_HTTP_CODE" -ne 204 ]; then
               echo "Error: Failed to assign issue $ISSUE. HTTP status code: $ASSIGN_HTTP_CODE"

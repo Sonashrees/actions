@@ -52,5 +52,4 @@ jobs:
               "transition": {
                 "id": "'"${TRANSITION_ID}"'"
               }
-            }'
-        done
+            

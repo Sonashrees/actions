@@ -25,24 +25,22 @@ jobs:
         echo "Creating a Jira issue in project $JIRA_PROJECT_KEY with label $label..."
 
         # Define the issue data
-        issue_data=$(jq -n \
-          --arg summary "New issue created at $current_datetime" \
-          --arg description "This issue was created via GitHub Actions at $current_datetime" \
-          --arg project_key "$JIRA_PROJECT_KEY" \
-          --arg label "$label" \
-          '{
-            "fields": {
-              "project": {
-                "key": $project_key
-              },
-              "summary": $summary,
-              "description": $description,
-              "issuetype": {
-                "name": "Task"
-              },
-              "labels": [$label]
-            }
-          }')
+        issue_data=$(cat <<EOF
+        {
+          "fields": {
+            "project": {
+              "key": "$JIRA_PROJECT_KEY"
+            },
+            "summary": "New issue created at $current_datetime",
+            "description": "This issue was created via GitHub Actions at $current_datetime",
+            "issuetype": {
+              "name": "Task"
+            },
+            "labels": ["$label"]
+          }
+        }
+        EOF
+        )
 
         # Create the issue
         response=$(curl -s -X POST -u $JIRA_EMAIL:$JIRA_API_TOKEN \
@@ -51,4 +49,3 @@ jobs:
         "https://$JIRA_HOST/rest/api/3/issue")
 
         echo "Response: $response"
-

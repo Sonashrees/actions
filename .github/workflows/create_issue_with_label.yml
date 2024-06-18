@@ -32,7 +32,21 @@ jobs:
               "key": "$JIRA_PROJECT_KEY"
             },
             "summary": "New issue created at $current_datetime",
-            "description": "This issue was created via GitHub Actions at $current_datetime",
+            "description": {
+              "type": "doc",
+              "version": 1,
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "text": "This issue was created via GitHub Actions at $current_datetime",
+                      "type": "text"
+                    }
+                  ]
+                }
+              ]
+            },
             "issuetype": {
               "name": "Task"
             },

@@ -3,10 +3,16 @@ import requests
 from requests.auth import HTTPBasicAuth
 import json
 
-# Define the required environment variables
+# Retrieve and print environment variables (excluding sensitive information)
 JIRA_API_TOKEN = os.getenv('JIRA_API_TOKEN')
 JIRA_USERNAME = os.getenv('JIRA_USERNAME')
 JIRA_URL = os.getenv('JIRA_URL')
+
+if not JIRA_API_TOKEN or not JIRA_USERNAME or not JIRA_URL:
+    raise ValueError("One or more required environment variables are missing: JIRA_API_TOKEN, JIRA_USERNAME, JIRA_URL")
+
+print(f"JIRA_URL: {JIRA_URL}")
+print(f"JIRA_USERNAME: {JIRA_USERNAME}")
 
 # Define the issue key and the field to monitor (adjust these as needed)
 ISSUE_KEY = 'NW-166'  # Replace with your actual issue key
@@ -26,9 +32,11 @@ def get_issue_details(issue_key):
     }
     response = requests.request("GET", url, headers=headers, auth=auth)
 
+    print(f"Response status code: {response.status_code}")
+    print(f"Response content: {response.text}")
+
     if response.status_code != 200:
-        print(f"Failed to fetch issue details: {response.status_code} - {response.text}")
-        response.raise_for_status()
+        raise Exception(f"Failed to fetch issue details: {response.status_code} - {response.text}")
     
     return response.json()
 
@@ -70,9 +78,11 @@ def create_subtask(parent_issue_key):
     })
     response = requests.request("POST", url, headers=headers, data=payload, auth=auth)
 
+    print(f"Subtask creation response status code: {response.status_code}")
+    print(f"Subtask creation response content: {response.text}")
+
     if response.status_code not in [200, 201]:
-        print(f"Failed to create subtask: {response.status_code} - {response.text}")
-        response.raise_for_status()
+        raise Exception(f"Failed to create subtask: {response.status_code} - {response.text}")
 
     return response.json()
 

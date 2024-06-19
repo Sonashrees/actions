@@ -15,7 +15,7 @@ print(f"JIRA_URL: {JIRA_URL}")
 print(f"JIRA_USERNAME: {JIRA_USERNAME}")
 
 # Define the issue key and the field to monitor (adjust these as needed)
-ISSUE_KEY = 'NW-166'  # Replace with your actual issue key
+ISSUE_KEY = 'NW-167'  # Replace with your actual issue key
 FIELD_TO_MONITOR = 'customfield_10213'  # Replace with your actual custom field ID
 DESIRED_FIELD_VALUE = 'CC-CI-2024-01-08'  # Replace with the actual value you are monitoring for
 

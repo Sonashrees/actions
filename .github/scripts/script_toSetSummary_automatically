@@ -1,0 +1,19 @@
+const summaryField = getFieldById("summary");
+
+if (isCreateView()) {
+    summaryField.setValue("Summary");
+    summaryField.setVisible(false);
+} else if (isIssueView()) {
+    // Make a request to get the issue details including the custom fields
+    const context = await getContext();
+    const issueKey = context.extension.issue.key;
+
+    const issueDetails = await makeRequest(`/rest/api/3/issue/${issueKey}`);
+
+    if (issueDetails.status === 200) {
+        const changeControlNumberValue = issueDetails.body.fields["customfield_10213"];
+        if (changeControlNumberValue) {
+            summaryField.setValue(changeControlNumberValue);
+        }
+    }
+}

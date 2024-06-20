@@ -1,0 +1,60 @@
+import java.text.SimpleDateFormat
+import java.util.TimeZone
+
+def issueKey = issue.key
+
+// Retrieve the issue changelog
+def changelogResponse = get("/rest/api/2/issue/${issueKey}?expand=changelog")
+        .header("Content-Type", "application/json")
+        .asObject(Map)
+
+// Extract the changelog histories
+def histories = changelogResponse.body.changelog.histories
+
+// Initialize a StringBuilder to store the content
+def contentBuilder = new StringBuilder()
+
+// Define a SimpleDateFormat instance for IST
+def sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm")
+sdf.timeZone = TimeZone.getTimeZone("IST")
+
+// Iterate over the histories to find the ones related to customfield_10043
+histories.each { history ->
+    history.items.each { item ->
+        if (item.fieldId == "customfield_10043") {
+            def author = history.author.displayName
+            contentBuilder.append("Author: ${author}\n")
+
+            def created = history.created
+            // Parse the created date
+            def parsedDate = new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", created)
+
+            // Format the parsed date in IST
+            def formattedDate = sdf.format(parsedDate)
+            contentBuilder.append("Created: ${formattedDate}\n")
+
+            def fromString = item.fromString
+            def toString = item.toString
+            contentBuilder.append("From: ${fromString}, To: ${toString}\n\n")
+        }
+    }
+}
+
+// Get the content as a string
+def content = contentBuilder.toString()
+
+// Update the custom field with the constructed content
+def updateResponse = put("/rest/api/2/issue/${issueKey}")
+        .header("Content-Type", "application/json")
+        .body([
+            fields: [
+                customfield_10162: content
+            ]
+        ])
+        .asString()
+
+if (updateResponse.status == 204) {
+    println("Custom field updated successfully.")
+} else {
+    println("Failed to update custom field: ${updateResponse.status} - ${updateResponse.body}")
+}

@@ -1,0 +1,21 @@
+const context = await getContext();
+const currentUserId = context.accountId;
+const projectId = context.extension.project.id;
+
+const allowedUserIds = "616e5133e79ff6006f1f8bd9";
+const allowedGroupId = "b7eca1f6-a1a7-4505-992d-c77b5660ccbb";
+
+// Fetch the current user's groups
+const userGroupsResponse = await makeRequest(`/rest/api/3/user/groups?accountId=${currentUserId}`);
+const userGroups = userGroupsResponse?.body?.map(group => group.groupId) || [];
+
+// Check if the current user is either the specific user or belongs to the specific group
+const isUserAllowed = allowedUserIds.includes(currentUserId) || userGroups.includes(allowedGroupId);
+
+// Fetching "System Verification" field and "10150"
+const audField = getFieldById("customfield_10051");
+const userField = getFieldById("customfield_10154");
+
+// Setting visibility based on user/group
+audField.setVisible(isUserAllowed);
+userField.setVisible(isUserAllowed);

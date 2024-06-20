@@ -1,0 +1,25 @@
+const single = getFieldById("customfield_10051");
+const text = getFieldById("customfield_10052");
+
+// On issue load logic
+if (isIssueView()) {
+    const singleValue = single.getValue();
+    if (singleValue === null || singleValue === undefined) {
+        text.setVisible(false);
+    } else if (singleValue.value === "Yes") {
+        text.setVisible(false);
+    } else if (singleValue.value === "No") {
+        text.setVisible(true);
+    }
+}
+
+// On change logic
+const changedField = getChangeField();
+if (changedField.getId() === "customfield_10051") {
+    const selectedValue = changedField.getValue();
+    if (selectedValue.value === "Yes") {
+        text.setVisible(false);
+    } else if (selectedValue.value === "No") {
+        text.setVisible(true);
+    }
+}

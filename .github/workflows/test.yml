@@ -1,31 +1,28 @@
-name: Close Jira Issues on PR Merge
-
+name: Transition Jira Issue
+ 
 on:
-  workflow dispatch:
-
+ workflow dispatch:
+ 
 jobs:
-  close-jira-issue:
+  transition-issue:
     runs-on: ubuntu-latest
+ 
     steps:
-      - name: Check if PR is merged
-        if: github.event.pull_request.merged == true
-        run: |
-          # Extract Jira issue keys from the PR title or body
-          # Example: PR title "Fixes PROJ-123: Bug fix"
-          JIRA_KEYS=$(echo "${{ github.event.pull_request.title }}" | grep -o 'PROJ-[0-9]\+' || true)
-          if [ -z "$JIRA_KEYS" ]; then
-            JIRA_KEYS=$(echo "${{ github.event.pull_request.body }}" | grep -o 'PROJ-[0-9]\+' || true)
-          fi
-          echo "JIRA keys found: $JIRA_KEYS"
-
-          # Loop through each Jira issue key and close it
-          for key in $JIRA_KEYS; do
-            curl -X POST \
-              -u ${{ secrets.JIRA_USERNAME }}:${{ secrets.JIRA_API_TOKEN }} \
-              -H "Content-Type: application/json" \
-              -d '{"transition": {"id": "close"}}' \
-              "https://sonashrees.atlassian.net/rest/api/2/issue/${key}/transitions"
-          done
-        env:
-          JIRA_USERNAME: ${{ secrets.JIRA_USERNAME }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+    - name: Checkout code
+      uses: actions/checkout@v3
+ 
+    - name: Transition Jira Issue
+      env:
+        JIRA_URL: ${{ secrets.JIRA_URL }}
+        JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        JIRA_ISSUE_KEY: ${{ secrets.JIRA_ISSUE_KEY }}
+        JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+      run: |
+        # Transition the Jira issue to "In Progress"
+        curl -X POST \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Basic $(echo -n $JIRA_USER_EMAIL:$JIRA_API_TOKEN | base64)" \
+          -d '{
+            "transition": { "id": "21" } # Replace "31" with the ID of your "In Progress" transition
+          }' \
+          $JIRA_URL/rest/api/2/issue/$JIRA_ISSUE_KEY/transitions

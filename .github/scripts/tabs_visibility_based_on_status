@@ -1,0 +1,13 @@
+const qaField = getFieldById("customfield_10070");
+const context = await getContext();
+
+const issueId = context.extension.issue.id;
+const res = await makeRequest(`/rest/api/3/issue/${issueId}`);
+
+const issueStatusId = res.body.fields.status.id;
+
+if (issueStatusId === "10019") {
+    qaField.setVisible(true);
+} else {
+    qaField.setVisible(false);
+}

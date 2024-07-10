@@ -1,1 +1,9 @@
+const userPickerField = getFieldById("customfield_10206");
+const uservalue = userPickerField.getValue()
+const userPickernextField = getFieldById("customfield_10207");
 
+if (uservalue === null || uservalue === undefined) {
+    userPickernextField.setVisible(false);
+} else {
+    userPickernextField.setVisible(true);
+}

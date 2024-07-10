@@ -1,0 +1,18 @@
+// Access the user picker field by its custom field ID
+const userPickerField = getFieldById("customfield_10207");
+const uservalue = userPickerField.getValue()
+ 
+// Get the value (account ID) of the user picker field
+const userAccountId = userPickerField.getValue()?.accountId;
+const context = await getContext();
+const currentUserId = context.accountId;
+const singleSelectField = getFieldById("customfield_10222");
+const singleValue = singleSelectField.getValue();
+
+if(uservalue === null || uservalue === undefined) {
+    singleSelectField.setVisible(false);
+} else if (currentUserId === userAccountId) {
+    singleSelectField.setVisible(true);
+} else if (currentUserId != userAccountId) {
+    singleSelectField.setVisible(false);
+}

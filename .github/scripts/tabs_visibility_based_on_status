@@ -1,3 +1,4 @@
+//QA field visibility based on the transitioned status
 const qaField = getFieldById("customfield_10070");
 const context = await getContext();
 
@@ -11,3 +12,7 @@ if (issueStatusId === "10019") {
 } else {
     qaField.setVisible(false);
 }
+
+
+
+

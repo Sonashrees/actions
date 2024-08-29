@@ -3,14 +3,14 @@ name: My first sample action
 on: push
 
 jobs:
-    firstjob:
+    first_job:
         runs-on: ubuntu-latest
         steps:
             -name: Welcome message
-                run: echo "my first message on github"
+             run: echo "my first message on github"
 
             -name: list files
-                run: ls
+             run: ls
 
             -name: read file
-                run: cat test.yml
+             run: cat test.yml

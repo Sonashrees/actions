@@ -1,0 +1,22 @@
+const audField = getFieldById("customfield_10061");
+const userField = getFieldById("customfield_10159");
+const signedbyField = getFieldById("customfield_10172");
+const historyField = getFieldById("customfield_10183");
+const context = await getContext();
+
+const issueId = context.extension.issue.id;
+const res = await makeRequest(`/rest/api/3/issue/${issueId}`);
+
+const issueStatusId = res.body.fields.status.id;
+
+if (issueStatusId === "10019") {
+    audField.setVisible(true);
+    userField.setVisible(true);
+    signedbyField.setVisible(true);
+    historyField.setVisible(true);
+} else {
+    audField.setVisible(false);
+    userField.setVisible(false);
+    signedbyField.setVisible(false);
+    historyField.setVisible(false);
+}

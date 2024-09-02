@@ -1,0 +1,9 @@
+def allowedSubtasks = []
+if(parentIssue.issueType.name == 'Bug'){
+   allowedSubtasks = allIssueTypes.findAll{it.name == 'Defect'}
+   //since there is only 1 available subtaks, might as well select it
+   issueTypeField.setFormValue(allowedSubtasks[0].id)
+} else {
+   allowedSubtasks = allIssueTypes.findAll{it.name != 'Defect'}
+}
+issueTypeField.setFieldOptions(allowedSubtasks)

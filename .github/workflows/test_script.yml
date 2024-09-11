@@ -12,7 +12,9 @@ jobs:
       uses: actions/checkout@v2
 
     - name: List repo files
-      uses: ls
-      
+      uses: ls -ltra
+
     - name: Execute shell script
-      run: ./asciiii.sh
+      run: |
+        chmod +x asciiii.sh
+        ./asciiii.sh

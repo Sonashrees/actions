@@ -17,4 +17,4 @@ jobs:
     - name: Execute shell script
       run: |
         chmod +x "test script.sh"
-        ./test_script.sh
+        ./"test script.sh"

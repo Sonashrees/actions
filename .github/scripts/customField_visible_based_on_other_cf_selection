@@ -23,3 +23,41 @@ if (changedField.getId() === "customfield_10051") {
         text.setVisible(true);
     }
 }
+
+
+or
+
+const single = getFieldById("customfield_10234");
+const text = getFieldById("customfield_10210");
+const text1 = getFieldById("customfield_10211");
+
+// Utility function to update text field visibility based on single field value
+function updateTextVisibility(singleValue) {
+    if (!singleValue || !singleValue.value) {
+        text.setVisible(false);
+        text1.setVisible(false);
+        return;
+    }
+    const normalizedValue = singleValue.value.toLowerCase();
+    if (normalizedValue === "standard") {
+        text.setVisible(true);
+        text1.setVisible(true);
+    } else if (normalizedValue === "non-standard") {
+        text.setVisible(false);
+        text1.setVisible(false);
+    } else {
+        text.setVisible(false);
+        text1.setVisible(false); // Default to hidden for unrecognized values
+    }
+}
+
+// On issue load logic
+if (isIssueView()) {
+    updateTextVisibility(single.getValue());
+}
+
+// On change logic
+const changedField = getChangeField();
+if (changedField && changedField.getId() === "customfield_10234") {
+    updateTextVisibility(changedField.getValue());
+}

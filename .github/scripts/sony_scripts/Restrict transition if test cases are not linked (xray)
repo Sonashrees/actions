@@ -1,0 +1,4 @@
+issue.issueType.name == 'Change Request (Business)' && 
+issue.links.some(link => link.type && link.type.name == 'Test' && 
+                          (link.outwardIssue && link.outwardIssue.issueType.name == 'Test' || 
+                           link.inwardIssue && link.inwardIssue.issueType.name == 'Test'))

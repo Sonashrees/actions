@@ -1,74 +1,64 @@
-# Notify Application lead when ticket is not updated from past 3 days.
+// Define the JQL query to find issues where the "Application Lead" field is populated
+String jqlQuery = 'project = "SAP - SANDBOX " AND updated <= -3d AND "Application Lead" IS NOT EMPTY AND status NOT IN (Closed,"Closed - Complete",Done,Reject,"Create Bug Fix","Testing Complete")'
 
-import groovy.json.JsonSlurper
+// Fetch issues matching the JQL query
+def issues = get('/rest/api/2/search')
+        .queryString('jql', jqlQuery)
+        .queryString('fields', 'key,assignee,status,customfield_10148') // customfield_10148 is the "Application Lead" field
+        .asObject(Map)
+        .body
+        .issues
 
-// Define constants
-def JQL_QUERY = 'project = "SAP - SANDBOX " AND updated <= -3d AND "Application Lead" IS NOT EMPTY AND status NOT IN (Closed,"Closed - Complete",Done,Reject,"Create Bug Fix","Testing Complete")'
-def MAX_RESULTS = 50
-def jiraBaseUrl = "https://spnitech.atlassian.net"
-def applicationLeadFieldId = "customfield_10148" // Replace with the custom field ID of "Application Lead"
-
-// HTTP request to search for issues
-def response = get("/rest/api/2/search")
-    .queryString("jql", JQL_QUERY)
-    .queryString("maxResults", MAX_RESULTS)
-    .queryString("fields", "summary,assignee,comment,status,updated,${applicationLeadFieldId}")
-    .asObject(Map)
-
-// Handle errors in the response
-if (response.status != 200) {
-    logger.error("Failed to fetch issues: ${response.status} ${response.body}")
-    return
-}
-
-// Parse the issues
-def issues = response.body.issues
+// Iterate over the issues
 issues.each { issue ->
-    def issueKey = issue.key
-    def issueSummary = issue.fields.summary
-    def issueUrl = "${jiraBaseUrl}/browse/${issueKey}"
-    def applicationLead = issue.fields[applicationLeadFieldId]
+    def applicationLead = issue.fields["customfield_10148"] // Application Lead field (replace with actual ID)
+    
+    // Debugging: Log the entire issue for inspection
+    println("Processing issue ${issue.key}: ${issue.fields}")
 
-    // Check if Application Lead field has data
     if (applicationLead) {
-        def leadName = applicationLead.displayName
-        def leadEmail = applicationLead.emailAddress
         def leadAccountId = applicationLead.accountId
+        def leadDisplayName = applicationLead.displayName
+        def issueKey = issue.key
+        def issueStatus = issue.fields.status.name
+        def issueUrl = "https://spnitech.atlassian.net/browse/${issueKey}"
 
-        // Construct the notification details
-        def messageBody = """
-            <p>Hi <b>${leadName}</b>,</p>
-            <p>This is a friendly reminder that the issue <a href="${issueUrl}">${issueKey}</a> has not changed status for the past 3 days.</p>
-            <p>Issue Summary: ${issueSummary}</p>
-            <p>Please review and update the status as needed.</p>
-        """
+        // Ensure that the issue has the correct application lead
+        if (leadAccountId) {
+            // Log application lead information
+            println("Processing issue ${issueKey}. Application Lead: ${leadDisplayName} (AccountId: ${leadAccountId})")
 
-        // Check if leadEmail or leadAccountId is available
-        if (leadEmail || leadAccountId) {
-            def notificationPayload = [
-                subject : "Reminder: Action required on issue ${issueKey}",
-                htmlBody: messageBody,
-                to      : leadEmail ? [emailAddress: leadEmail] : [accountId: leadAccountId]
-            ]
+            // Construct the email body
+            def messageBody = """
+                <p>Hi <b>${leadDisplayName}</b>,</p>
+                <p>This is a friendly reminder that the issue <a href="${issueUrl}">${issueKey}</a> is still in the '${issueStatus}' status and hasn't had any updates recently.</p>
+                <p>Please review and take action as needed.</p>
+            """
 
-            logger.info("Notification Payload for ${issueKey}: ${notificationPayload}")
-
-            // Send the notification
+            // Send the email notification to the application lead
             def sendNotification = post("/rest/api/2/issue/${issueKey}/notify")
-                .header("Content-Type", "application/json")
-                .body(notificationPayload)
-                .asString()
+                    .header("Content-Type", "application/json")
+                    .body([
+                            subject : "Reminder: Action required on issue ${issueKey}",
+                            htmlBody: messageBody,
+                            to      : [
+                                users: [
+                                    [accountId: leadAccountId] // Send the notification to the Application Lead only
+                                ]
+                            ]
+                    ])
+                    .asString()
 
-            // Log the result of the notification
-            if (sendNotification.status == 204) {
-                logger.info("Notification successfully sent to ${leadName} for issue ${issueKey}")
+            // Check for successful email notification
+            if (sendNotification.status != 204) {
+                println("Failed to send notification for issue ${issueKey}. Status: ${sendNotification.status}, Response: ${sendNotification.body}")
             } else {
-                logger.error("Failed to send notification for issue ${issueKey}: ${sendNotification.status} ${sendNotification.body}")
+                println("Notification sent successfully for issue ${issueKey} to ${leadDisplayName}.")
             }
         } else {
-            logger.warn("No email or account ID found for Application Lead of issue ${issueKey}. Skipping notification.")
+            println("No valid Application Lead found for issue ${issueKey}. Skipping notification.")
         }
     } else {
-        logger.warn("Application Lead is not assigned for issue ${issueKey}. Skipping notification.")
+        println("Application Lead not assigned for issue ${issue.key}. Skipping notification.")
     }
 }
